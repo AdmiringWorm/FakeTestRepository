@@ -5,6 +5,29 @@ param (
 )
 $ErrorActionPreference = 'Stop'
 
+$githubHeaders = @{
+  Authorization = "token $githubToken"
+}
+
+"Deleting existing releases..."
+$releases = Invoke-RestMethod -Headers $githubHeaders -Method Get -Uri "https://api.github.com/repos/AdmiringWorm/FakeTestRepository/releases" -UseBasicParsing
+
+$releases | % {
+  Invoke-RestMethod -Headers $githubHeaders -Method Delete -Uri $_.url -UseBasicParsing
+}
+
+"Removing existing comments..."
+
+$comments = Invoke-RestMethod -Headers $githubHeaders -Method Get -Uri "https://api.github.com/repos/AdmiringWorm/FakeTestRepository/issues/comments" -UseBasicParsing
+
+$comments | % {
+  $matchContent = [regex]::Escape("<!-- GitReleaseManager release comment -->")
+  $notMatchContent = [regex]::Escape("<!-- Should not be removed -->")
+  if (($_.Body -match $matchContent) -and ($_.Body -notmatch $notMatchContent)) {
+      Invoke-RestMethod -Headers $githubHeaders -Method Delete -Uri $_.url -UseBasicParsing
+  }
+}
+
 "Opening the closed milestone"
 dotnet gitreleasemanager open --token $githubToken --owner "AdmiringWorm" --repository "FakeTestRepository" --milestone "1.0.0" --verbose --debug
 if ($LASTEXITCODE -ne 0) {
@@ -46,6 +69,3 @@ dotnet gitreleasemanager close --token $githubToken --owner "AdmiringWorm" --rep
 if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }
-
-
-Write-Warning "Remember to remove the created release, any any comments created before running this script again"
