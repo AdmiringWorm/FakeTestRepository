@@ -1,0 +1,11 @@
+image:
+- Visual Studio 2019
+
+install:
+  - pwsh: |
+      "Parsing appveyor commit message: '$env:APPVEYOR_REPO_COMMIT_MESSAGE'"
+      $grmVersion = $env:APPVEYOR_REPO_COMMIT_MESSAGE -replace "^\[GRM\s([^\s\]]+).*$","`$1"
+      dotnet tool install -g --version "$grmVersion" GitReleaseManager.Tool --add-source https://ci.appveyor.com/nuget/gitreleasemanager-sv3pcf457p9b
+
+build_script:
+  - pwsh: ./runTest.ps1
