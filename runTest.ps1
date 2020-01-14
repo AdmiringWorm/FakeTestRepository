@@ -17,7 +17,7 @@ $status = @{
   Close   = $false
 }
 
-$grm = Resolve-path "tools/**/dotnet-gitreleasemanager*" -ea 0 | % Path
+$grm = Resolve-path "tools/dotnet-gitreleasemanager*" -ea 0 | % Path
 if (!$grm) {
   $grm = Get-Command "dotnet-gitreleasemanager" -ea 0 | % Path
 }
