@@ -17,13 +17,13 @@ $status = @{
   Close   = $false
 }
 
-$grm = Resolve-path "tools/dotnet-gitreleasemanager*" -ea 0 | % Path
+$grm = Resolve-path "tools/dotnet-gitreleasemanager*" -ea 0 | ForEach-Object Path
 if (!$grm) {
-  $grm = Get-Command "dotnet-gitreleasemanager" -ea 0 | % Path
+  $grm = Get-Command "dotnet-gitreleasemanager" -ea 0 | ForEach-Object Path
 }
 
 if (!$grm) {
-  $grm = Get-Command "GitReleaseManager" -ea 0 | % Path
+  $grm = Get-Command "GitReleaseManager" -ea 0 | ForEach-Object Path
 }
 
 if (!$grm) {
@@ -40,7 +40,7 @@ $githubHeaders = @{
 "Deleting existing releases..."
 $releases = Invoke-RestMethod -Headers $githubHeaders -Method Get -Uri "https://api.github.com/repos/AdmiringWorm/FakeTestRepository/releases" -UseBasicParsing
 
-$releases | % {
+$releases | ForEach-Object {
   Invoke-RestMethod -Headers $githubHeaders -Method Delete -Uri $_.url -UseBasicParsing
 }
 
@@ -48,7 +48,7 @@ $releases | % {
 
 $comments = Invoke-RestMethod -Headers $githubHeaders -Method Get -Uri "https://api.github.com/repos/AdmiringWorm/FakeTestRepository/issues/comments" -UseBasicParsing
 
-$comments | % {
+$comments | ForEach-Object {
   $matchContent = [regex]::Escape("<!-- GitReleaseManager release comment -->")
   $notMatchContent = [regex]::Escape("<!-- Should not be removed -->")
   if (($_.Body -match $matchContent) -and ($_.Body -notmatch $notMatchContent)) {
@@ -124,7 +124,7 @@ if ($prId -and $env:APPVEYOR) {
   $buildUrl = "$env:APPVEYOR_URL/project/$env:APPVEYOR_PROJECT_SLUG/builds/$env:APPVEYOR_BUILD_ID/job/$env:APPVEYOR_JOB_ID"
 
   $statusMarkdown = @"
-- [$(if ($status.All) { "$successMarkdown" } else { "$failureMarkdown" }) Image $env:APPVEYOR_BUILD_WORKER_IMAGE]($buildUrl)
+- [$(if ($status.All) { "$successMarkdown" } else { "$failureMarkdown" }) Image $env:APPVEYOR_BUILD_WORKER_IMAGE (Updated $([System.DateTime]::UtcNow.ToString('s')))]($buildUrl)
   - $(if ($status.Open) { "$successMarkdown" } else { "$failureMarkdown" } ) Open Milestone
   - $(if ($status.Create) { "$successMarkdown" } else { "$failureMarkdown" } ) Creating Release
   - $(if ($status.Create) { "$successMarkdown" } else { "$failureMarkdown" } ) Discarding Release
@@ -137,7 +137,7 @@ if ($prId -and $env:APPVEYOR) {
   "$statusMarkdown" -replace $successMarkdown,"[TRUE]" -replace $failureMarkdown,"[FALSE]"
 
   $prComments = Invoke-RestMethod -Headers $githubHeaders -Method Get -Uri "https://api.github.com/repos/GitTools/GitReleaseManager/issues/${prId}/comments"
-  $details = $prComments | ? Body -Match "<!-- INTEGRATION TEST STATUS -->" | select -First 1
+  $details = $prComments | Where-Object Body -Match "<!-- INTEGRATION TEST STATUS -->" | Select-Object -First 1
 
   if (!$details) {
     $markdown = "<!-- INTEGRATION TEST STATUS -->`nIntegration tests have been run for this Pull Request.`nThe status for these are shown below`n`n"
@@ -145,7 +145,7 @@ if ($prId -and $env:APPVEYOR) {
     $re = "- \[(?:$successMarkdown|$failureMarkdown)\s*Image $env:APPVEYOR_BUILD_WORKER_IMAGE(?:[^\[]*|[\r\n]*)(\- \[:heavy_check_mark:|:x:|$)"
     $re
     $details.body = $details.body -replace "✔️",":heavy_check_mark:" -replace "❌",":x:"
-    $markdown = $details | % { $_.Body -replace $re,"`${1}" }
+    $markdown = $details | ForEach-Object { $_.Body -replace $re,"`${1}" }
   }
 
   $markdown = "${markdown}${statusMarkdown}`n"
