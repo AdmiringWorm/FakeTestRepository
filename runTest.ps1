@@ -140,12 +140,15 @@ if ($prId -and $env:APPVEYOR) {
   $details = $prComments | ? Body -Match "<!-- INTEGRATION TEST STATUS -->" | select -First 1
 
   if (!$details) {
-    $markdown = "<!-- INTEGRATION TEST STATUS -->`nIntegration tests have been run for this Pull Request.`nThe status for these are shown below`n"
+    $markdown = "<!-- INTEGRATION TEST STATUS -->`nIntegration tests have been run for this Pull Request.`nThe status for these are shown below`n`n"
   } else {
-    $markdown = $details | % { $_.Body -replace "✔️",":heavy_check_mark:" -replace "❌",":x:" -replace "- \[($successMarkdown|$failureMarkdown)\s*Image $env:APPVEYOR_BUILD_WORKER_IMAGE.*[\r\n]*(- \[Image |$)","`${1}" }
+    $re = "- \[(?:$successMarkdown|$failureMarkdown)\s*Image $env:APPVEYOR_BUILD_WORKER_IMAGE(?:[^\[]*|[\r\n]*)(\- \[:heavy_check_mark:|:x:|$)"
+    $re
+    $details.body = $details.body -replace "✔️",":heavy_check_mark:" -replace "❌",":x:"
+    $markdown = $details | % { $_.Body -replace $re,"`${1}" }
   }
 
-  $markdown = "${markdown}`n${statusMarkdown}"
+  $markdown = "${markdown}${statusMarkdown}`n"
 
   if ($details) {
     $url = $details.url
@@ -154,6 +157,8 @@ if ($prId -and $env:APPVEYOR) {
     $url = "https://api.github.com/repos/GitTools/GitReleaseManager/issues/${prId}/comments"
     $method = 'POST'
   }
+
+  $markdown
 
   $bodyContent = @{
     "body" = $markdown
