@@ -1,7 +1,7 @@
 ﻿[CmdletBinding()]
 param (
-  ##[Parameter(Mandatory = $true)]
-  [string]$grmVersion = "0.11.0-PullRequest0196-0155",
+  [Parameter(Mandatory = $true)]
+  [string]$grmVersion,
   [ValidateNotNullOrEmpty()]
   [string]$githubToken = $env:GITHUB_TOKEN
 )
