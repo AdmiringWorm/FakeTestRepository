@@ -121,7 +121,7 @@ $prId = $grmVersion -replace ".*PullRequest0?(\d+)\-.*","`${1}"
 if ($prId -and $env:APPVEYOR) {
   $successMarkdown = ":heavy_check_mark:"
   $failureMarkdown = ":x:"
-  $buildUrl = "$env:APPVEYOR_URL/project/$env:APPVEYOR_PROJECT_SLUG/builds/$env:APPVEYOR_BUILD_ID/job/$env:APPVEYOR_JOB_ID"
+  $buildUrl = "$env:APPVEYOR_URL/project/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/builds/$env:APPVEYOR_BUILD_ID/job/$env:APPVEYOR_JOB_ID"
 
   $statusMarkdown = @"
 - [$(if ($status.All) { "$successMarkdown" } else { "$failureMarkdown" }) Image $env:APPVEYOR_BUILD_WORKER_IMAGE (Updated $([System.DateTime]::UtcNow.ToString('s')))]($buildUrl)
