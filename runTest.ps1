@@ -119,8 +119,8 @@ else {
 $prId = $grmVersion -replace ".*PullRequest0?(\d+)\-.*","`${1}"
 
 if ($prId -and $env:APPVEYOR) {
-  $successMarkdown = "✔️"
-  $failureMarkdown = "❌"
+  $successMarkdown = ":heavy_check_mark:"
+  $failureMarkdown = ":x:"
   $buildUrl = "$env:APPVEYOR_URL/project/$env:APPVEYOR_PROJECT_SLUG/builds/$env:APPVEYOR_BUILD_ID/job/$env:APPVEYOR_JOB_ID"
 
   $statusMarkdown = @"
@@ -136,15 +136,13 @@ if ($prId -and $env:APPVEYOR) {
 
   "$statusMarkdown" -replace $successMarkdown,"[TRUE]" -replace $failureMarkdown,"[FALSE]"
 
-  $markdown = $null
   $prComments = Invoke-RestMethod -Headers $githubHeaders -Method Get -Uri "https://api.github.com/repos/GitTools/GitReleaseManager/issues/${prId}/comments"
   $details = $prComments | ? Body -Match "<!-- INTEGRATION TEST STATUS -->" | select -First 1
-  $details = $null
 
   if (!$details) {
     $markdown = "<!-- INTEGRATION TEST STATUS -->`nIntegration tests have been run for this Pull Request.`nThe status for these are shown below`n"
   } else {
-    $markdown = $details | % { $_.Body -replace "- \[($successMarkdown|$failureMarkdown)\s*Image $env:APPVEYOR_BUILD_WORKER_IMAGE.*[\r\n]*(- \[Image |$)","`${1}" }
+    $markdown = $details | % { $_.Body -replace "✔️",":heavy_check_mark:" -replace "❌",":x:" -replace "- \[($successMarkdown|$failureMarkdown)\s*Image $env:APPVEYOR_BUILD_WORKER_IMAGE.*[\r\n]*(- \[Image |$)","`${1}" }
   }
 
   $markdown = "${markdown}`n${statusMarkdown}"
