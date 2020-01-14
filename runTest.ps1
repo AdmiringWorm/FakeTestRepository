@@ -134,7 +134,7 @@ if ($prId -and $env:APPVEYOR) {
 "@
 
 
-  "$statusMarkdown"
+  "$statusMarkdown" -replace $successMarkdown,"[TRUE]" -replace $failureMarkdown,"[FALSE]"
 
   $markdown = $null
   #$prComments = Invoke-RestMethod -Headers $githubHeaders -Method Get -Uri "https://api.github.com/repos/GitTools/GitReleaseManager/issues/${prId}/comments"
