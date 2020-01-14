@@ -137,8 +137,8 @@ if ($prId -and $env:APPVEYOR) {
   "$statusMarkdown" -replace $successMarkdown,"[TRUE]" -replace $failureMarkdown,"[FALSE]"
 
   $markdown = $null
-  #$prComments = Invoke-RestMethod -Headers $githubHeaders -Method Get -Uri "https://api.github.com/repos/GitTools/GitReleaseManager/issues/${prId}/comments"
-  #$details = $prComments | ? Body -Match "<!-- INTEGRATION TEST STATUS -->" | select -First 1
+  $prComments = Invoke-RestMethod -Headers $githubHeaders -Method Get -Uri "https://api.github.com/repos/GitTools/GitReleaseManager/issues/${prId}/comments"
+  $details = $prComments | ? Body -Match "<!-- INTEGRATION TEST STATUS -->" | select -First 1
   $details = $null
 
   if (!$details) {
@@ -148,4 +148,18 @@ if ($prId -and $env:APPVEYOR) {
   }
 
   $markdown = "${markdown}`n${statusMarkdown}"
+
+  if ($details) {
+    $url = $details.url
+    $method = 'PATCH'
+  } else {
+    $url = "https://api.github.com/repos/GitTools/GitReleaseManager/issues/${prId}/comments"
+    $method = 'POST'
+  }
+
+  $bodyContent = @{
+    "body" = $markdown
+  } | ConvertTo-Json
+
+  Invoke-RestMethod -Headers $githubHeaders -Uri $url -Method $method -ContentType "application/json" -Body $bodyContent
 }
