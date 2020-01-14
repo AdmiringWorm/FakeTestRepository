@@ -5,6 +5,31 @@ param (
 )
 $ErrorActionPreference = 'Stop'
 
+$status = @{
+  Open = $false
+  Create = $false
+  Discard = $false
+  upload = $false
+  publish = $false
+  close = $false
+}
+
+$grm = Resolve-path "tools/**/dotnet-gitreleasemanager*" -ea 0 | % Path
+if (!$grm) {
+  $grm = Get-Command "dotnet-gitreleasemanager" -ea 0 | % Path
+}
+
+if (!$grm) {
+  $grm = Get-Command "GitReleaseManager" -ea 0 | % Path
+}
+
+if (!$grm) {
+  throw "GitReleaseManager executable was not found"
+}
+
+"Using GitReleaseManager from '$grm'"
+. $grm --version
+
 $githubHeaders = @{
   Authorization = "token $githubToken"
 }
@@ -29,43 +54,43 @@ $comments | % {
 }
 
 "Opening the closed milestone"
-dotnet gitreleasemanager open --token $githubToken --owner "AdmiringWorm" --repository "FakeTestRepository" --milestone "1.0.0" --verbose --debug
+. "$grm" open --token $githubToken --owner "AdmiringWorm" --repository "FakeTestRepository" --milestone "1.0.0" --verbose --debug
 if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }
 
 "Creating a new release..."
-dotnet gitreleasemanager create --token $githubToken --owner "AdmiringWorm" --repository "FakeTestRepository" --milestone "1.0.0" --verbose --debug
+. "$grm" create --token $githubToken --owner "AdmiringWorm" --repository "FakeTestRepository" --milestone "1.0.0" --verbose --debug
 if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }
 
 "Discarding the release"
-dotnet gitreleasemanager discard --token $githubToken --owner "AdmiringWorm" --repository "FakeTestRepository" --milestone "1.0.0" --verbose --debug
+. "$grm" discard --token $githubToken --owner "AdmiringWorm" --repository "FakeTestRepository" --milestone "1.0.0" --verbose --debug
 if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }
 
 "Creating the new release again"
-dotnet gitreleasemanager create --token $githubToken --owner "AdmiringWorm" --repository "FakeTestRepository" --milestone "1.0.0"
+. "$grm" create --token $githubToken --owner "AdmiringWorm" --repository "FakeTestRepository" --milestone "1.0.0"
 if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }
 
 "Uploading new assets"
-dotnet gitreleasemanager addasset --token $githubToken --owner "AdmiringWorm" --repository "FakeTestRepository" --tagName "1.0.0" --assets "LICENSE,README.md,runTest.ps1" --verbose --debug
+. "$grm" addasset --token $githubToken --owner "AdmiringWorm" --repository "FakeTestRepository" --tagName "1.0.0" --assets "LICENSE,README.md,runTest.ps1" --verbose --debug
 if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }
 
 "Publishing created release"
-dotnet gitreleasemanager publish --token $githubToken --owner "AdmiringWorm" --repository "FakeTestRepository" --tagName "1.0.0" --verbose --debug
+. "$grm" publish --token $githubToken --owner "AdmiringWorm" --repository "FakeTestRepository" --tagName "1.0.0" --verbose --debug
 if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }
 
 "Closing milestone"
-dotnet gitreleasemanager close --token $githubToken --owner "AdmiringWorm" --repository "FakeTestRepository" --milestone "1.0.0" --verbose --debug
+. "$grm" close --token $githubToken --owner "AdmiringWorm" --repository "FakeTestRepository" --milestone "1.0.0" --verbose --debug
 if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }
