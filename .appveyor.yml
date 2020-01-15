@@ -1,6 +1,8 @@
 image:
-- Visual Studio 2019
+- macos
+- Ubuntu
 - Visual Studio 2017
+- Visual Studio 2019
 
 install:
   - pwsh: |
