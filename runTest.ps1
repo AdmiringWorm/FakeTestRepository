@@ -40,7 +40,7 @@ $githubHeaders = @{
 "Deleting existing releases..."
 $releases = Invoke-RestMethod -Headers $githubHeaders -Method Get -Uri "https://api.github.com/repos/AdmiringWorm/FakeTestRepository/releases" -UseBasicParsing
 
-$releases | ForEach-Object {
+$releases | Where-Object { $_.tagName -ne '0.1.0' } | ForEach-Object {
   Invoke-RestMethod -Headers $githubHeaders -Method Delete -Uri $_.url -UseBasicParsing
 }
 
