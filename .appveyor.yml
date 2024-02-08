@@ -3,6 +3,7 @@ image:
 - Ubuntu
 - Visual Studio 2017
 - Visual Studio 2019
+- Visual Studio 2022
 for:
 -
   matrix:

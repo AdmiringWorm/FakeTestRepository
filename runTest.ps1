@@ -1,9 +1,12 @@
-﻿[CmdletBinding()]
+﻿[CmdletBinding(DefaultParameterSetName = 'Path')]
 param (
-  [Parameter(Mandatory = $true)]
+  [Parameter(Mandatory = $true, ParameterSetName = 'Versioning')]
   [string]$grmVersion,
+  [Parameter(Mandatory = $false, ParameterSetName = 'Path')]
+  [string]$grmPath,
   [ValidateNotNullOrEmpty()]
-  [string]$githubToken = $env:GITHUB_TOKEN
+  [string]$githubToken = $env:GITHUB_TOKEN,
+  [switch]$reset
 )
 $ErrorActionPreference = 'Stop'
 
@@ -17,13 +20,18 @@ $status = @{
   Close   = $false
 }
 
-$grm = Resolve-path "tools/dotnet-gitreleasemanager*" -ea 0 | ForEach-Object Path
-if (!$grm) {
-  $grm = Get-Command "dotnet-gitreleasemanager" -ea 0 | ForEach-Object Path
+if ($grmPath) {
+  $grm = $grmPath
 }
+else {
+  $grm = Resolve-path "tools/dotnet-gitreleasemanager*" -ea 0 | ForEach-Object Path
+  if (!$grm) {
+    $grm = Get-Command "dotnet-gitreleasemanager" -ea 0 | ForEach-Object Path
+  }
 
-if (!$grm) {
-  $grm = Get-Command "GitReleaseManager" -ea 0 | ForEach-Object Path
+  if (!$grm) {
+    $grm = Get-Command "GitReleaseManager" -ea 0 | ForEach-Object Path
+  }
 }
 
 if (!$grm) {
@@ -54,6 +62,10 @@ $comments | ForEach-Object {
   if (($_.Body -match $matchContent) -and ($_.Body -notmatch $notMatchContent)) {
     Invoke-RestMethod -Headers $githubHeaders -Method Delete -Uri $_.url -UseBasicParsing
   }
+}
+
+if ($reset) {
+  return;
 }
 
 "Opening the closed milestone"
@@ -116,7 +128,7 @@ else {
   $status.Close = $true
 }
 
-$prId = $grmVersion -replace ".*PullRequest0?(\d+)\-.*","`${1}"
+$prId = $grmVersion -replace ".*PullRequest0?(\d+)\-.*", "`${1}"
 
 if ($prId -and $env:APPVEYOR) {
   $successMarkdown = ":heavy_check_mark:"
@@ -134,18 +146,19 @@ if ($prId -and $env:APPVEYOR) {
 "@
 
 
-  "$statusMarkdown" -replace $successMarkdown,"[TRUE]" -replace $failureMarkdown,"[FALSE]"
+  "$statusMarkdown" -replace $successMarkdown, "[TRUE]" -replace $failureMarkdown, "[FALSE]"
 
   $prComments = Invoke-RestMethod -Headers $githubHeaders -Method Get -Uri "https://api.github.com/repos/GitTools/GitReleaseManager/issues/${prId}/comments"
   $details = $prComments | Where-Object Body -Match "<!-- INTEGRATION TEST STATUS -->" | Select-Object -First 1
 
   if (!$details) {
     $markdown = "<!-- INTEGRATION TEST STATUS -->`nIntegration tests have been run for this Pull Request.`nThe status for these are shown below`n`n"
-  } else {
+  }
+  else {
     $re = "- \[(?:$successMarkdown|$failureMarkdown)\s*Image $env:APPVEYOR_BUILD_WORKER_IMAGE(?:[^\[]*|[\r\n]*)(\- \[:heavy_check_mark:|:x:|$)"
     $re
-    $details.body = $details.body -replace "✔️",":heavy_check_mark:" -replace "❌",":x:"
-    $markdown = $details | ForEach-Object { $_.Body -replace $re,"`${1}" }
+    $details.body = $details.body -replace "✔️", ":heavy_check_mark:" -replace "❌", ":x:"
+    $markdown = $details | ForEach-Object { $_.Body -replace $re, "`${1}" }
   }
 
   $markdown = "${markdown}${statusMarkdown}`n"
@@ -153,7 +166,8 @@ if ($prId -and $env:APPVEYOR) {
   if ($details) {
     $url = $details.url
     $method = 'PATCH'
-  } else {
+  }
+  else {
     $url = "https://api.github.com/repos/GitTools/GitReleaseManager/issues/${prId}/comments"
     $method = 'POST'
   }
